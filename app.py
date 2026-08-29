@@ -118,12 +118,51 @@ def register():
             conn.close()
         except:
             pass
+        
+###ADMIN METHODSSS
 @app.route("/admin",methods = ['GET'])
 def admin(): 
     if session.get("user_id"):
-    
-     return render_template("dashboard.html")
+        print(session.get("user_id"))
+        return render_template("dashboard.html")
+
     return redirect("/")
+
+@app.route("/user_details",methods=['GET'])
+def user_details():
+    if session.get("user_id"):
+        try:
+            conn = sqlite3.connect(DB_PATH)
+            cursor = conn.cursor()
+            
+            cursor.execute("SELECT username FROM users WHERE id = ?", (session.get("user_id"),))
+
+            name = cursor.fetchone()          
+            return jsonify({
+                "status":"success",
+                "user":name[0]
+            }),200
+        except Exception as error:
+            print(error)
+            return jsonify({"message": "failed"}), 500
+        finally:
+            try:
+                cursor.close()
+                conn.close()
+            except:
+                pass
+            
+@app.route("/logout")
+def logout():
+    if session.get("user_id"):
+        try:
+            session.clear()
+            
+            return redirect("/")
+        except session as error:
+            print(error)
+            return jsonify({"message":"failed"})
+
 if __name__ == "__main__":
     initDB()
     app.run(debug=True)
